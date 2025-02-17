@@ -28,16 +28,17 @@ const MASP_MODELS = models.filter(m => m.name !== 'nanos')
 const TEST_SIGN_DATA = {
   name: 'transfer',
   blob: Buffer.from(MASP_TRANSFER_SIGNING_TX, 'hex'),
-  sectionHashes: {
-    0: Buffer.from('af859437564c2c660a42903d9dca0686f1229cf4039894cf2b4cc4529decde6f', 'hex'),
-    1: Buffer.from('1f07d555db2430f5dbf51e1f70ce0852affeb8d5791a6957a9895b40ce79e726', 'hex'),
-    2: Buffer.from('20b9054f4e22fdaeda9d89999fee8c91493873ccaa268df016e0fe86e55de363', 'hex'),
-    3: Buffer.from('a4fa85bd4b2205d4fd51e438bf65c95edf3503236ec0ffbe3a471524af2efa24', 'hex'),
-    4: Buffer.from('0cadb91730d8d5904469534807019c50300e492afd8aa118d91482c5c8f7d657', 'hex'),
-    5: Buffer.from('229f900de2dd6d43affc2822cceac915bdfba7e9b001f435f42a677c69708aaa', 'hex'),
-    6: Buffer.from('21085924ad08eb3b0934a9f558c9a34d89180defbb4bb583747e519073f2399e', 'hex'),
-    0xff: Buffer.from('95d70ed16980f4cab39179b420fe39b5d0209eae016778307bf3bc43d4b9999a', 'hex'),
-  } as { [index: number]: Buffer },
+  sectionIndices: [0, 1, 2, 3, 4, 5, 6, 0xff],
+  sectionHashes: [
+    "af859437564c2c660a42903d9dca0686f1229cf4039894cf2b4cc4529decde6f",
+    "1f07d555db2430f5dbf51e1f70ce0852affeb8d5791a6957a9895b40ce79e726",
+    "20b9054f4e22fdaeda9d89999fee8c91493873ccaa268df016e0fe86e55de363",
+    "a4fa85bd4b2205d4fd51e438bf65c95edf3503236ec0ffbe3a471524af2efa24",
+    "0cadb91730d8d5904469534807019c50300e492afd8aa118d91482c5c8f7d657",
+    "229f900de2dd6d43affc2822cceac915bdfba7e9b001f435f42a677c69708aaa",
+    "21085924ad08eb3b0934a9f558c9a34d89180defbb4bb583747e519073f2399e",
+    "95d70ed16980f4cab39179b420fe39b5d0209eae016778307bf3bc43d4b9999a",
+  ],
 }
 
 describe('Masp', function () {
@@ -141,7 +142,7 @@ describe('Masp', function () {
       expect(signature.rawPubkey).toEqual(resp_addr.rawPubkey)
       console.log(signature)
       // Verify raw signature
-      const unsignedRawSigHash = hashSignatureSec([], signature.raw_salt, TEST_SIGN_DATA.sectionHashes, signature.raw_indices, null, null)
+      const unsignedRawSigHash = hashSignatureSec([], signature.raw_salt, TEST_SIGN_DATA.sectionIndices, TEST_SIGN_DATA.sectionHashes, signature.raw_indices, null, null)
       const rawSig = ed25519.verify(signature.raw_signature.subarray(1), unsignedRawSigHash, signature.rawPubkey.subarray(1))
 
       // Verify wrapper signature
@@ -149,16 +150,19 @@ describe('Masp', function () {
       const rawHash: Buffer = hashSignatureSec(
         [signature.rawPubkey],
         signature.raw_salt,
+        TEST_SIGN_DATA.sectionIndices,
         TEST_SIGN_DATA.sectionHashes,
         signature.raw_indices,
         signature.raw_signature,
         prefix,
       )
-      const tmpHashes = { ...TEST_SIGN_DATA.sectionHashes }
+      const tmpIndices = [ ...TEST_SIGN_DATA.sectionIndices ]
+      const tmpHashes = [ ...TEST_SIGN_DATA.sectionHashes ]
 
-      tmpHashes[Object.keys(tmpHashes).length - 1] = rawHash
+      tmpIndices.push(tmpHashes.length - 1)
+      tmpHashes.push(rawHash.toString('hex'))
 
-      const unsignedWrapperSigHash = hashSignatureSec([], signature.wrapper_salt, tmpHashes, signature.wrapper_indices, null, null)
+      const unsignedWrapperSigHash = hashSignatureSec([], signature.wrapper_salt, tmpIndices, tmpHashes, signature.wrapper_indices, null, null)
       const wrapperSig = ed25519.verify(signature.wrapper_signature.subarray(1), unsignedWrapperSigHash, resp_addr.rawPubkey.subarray(1))
 
       expect(wrapperSig && rawSig).toEqual(true)
