@@ -1,6 +1,6 @@
 const sha256 = require('js-sha256')
 
-export function hashSignatureSec(pubkeys: Buffer[], salt: Buffer, hashes: { [index: number]: Buffer }, indices: Buffer, signature: Buffer | null, prefix: Uint8Array | null) {
+export function hashSignatureSec(pubkeys: Buffer[], salt: Buffer, sectionIndices: number[], sectionHashes: string[], indices: Buffer, signature: Buffer | null, prefix: Uint8Array | null) {
   let hash = sha256.create();
   if (prefix != null) {
     hash.update(prefix);
@@ -8,7 +8,7 @@ export function hashSignatureSec(pubkeys: Buffer[], salt: Buffer, hashes: { [ind
 
   hash.update(new Uint8Array([indices.length, 0, 0, 0]));
   for (let i = 0; i < (indices.length); i ++) {
-    hash.update(Buffer.from(hashes[indices[i]]));
+    hash.update(Buffer.from(sectionHashes[sectionIndices.indexOf(indices[i])], 'hex'));
   }
 
   // Signer::PubKeys
