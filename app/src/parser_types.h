@@ -333,7 +333,7 @@ typedef struct {
     bytes_t targets;
     uint32_t no_symbol_sources;
     uint32_t no_symbol_targets;
-    uint8_t has_shielded_hash;
+    uint8_t has_shielded_data;
     bytes_t shielded_hash;
 } tx_transfer_t;
 
