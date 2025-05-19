@@ -557,11 +557,13 @@ static parser_error_t readTransferTxn(const bytes_t *data, parser_tx_t *v) {
     }
     v->transfer.targets.len = ctx.buffer + ctx.offset - v->transfer.targets.ptr;
 
-    // shielded hash, check if it is there
+    // shielded data, check if it is there
     CHECK_ERROR(readByte(&ctx, &v->transfer.has_shielded_data))
     if (v->transfer.has_shielded_data){
         v->transfer.shielded_hash.len = HASH_LEN;
+        v->transfer.fmd_section_hash.len = HASH_LEN;
         CHECK_ERROR(readBytes(&ctx,  &v->transfer.shielded_hash.ptr, v->transfer.shielded_hash.len))
+        CHECK_ERROR(readBytes(&ctx,  &v->transfer.fmd_section_hash.ptr, v->transfer.fmd_section_hash.len))
     }
 
     if (ctx.offset != ctx.bufferLen) {
@@ -926,11 +928,13 @@ static parser_error_t readIBCTxn(const bytes_t *data, parser_tx_t *v) {
         }
         v->ibc.transfer.targets.len = ctx.buffer + ctx.offset - v->ibc.transfer.targets.ptr;
 
-        // shielded hash, check if it is there
+        // shielded data, check if it is there
         CHECK_ERROR(readByte(&ctx, &v->ibc.transfer.has_shielded_data))
         if (v->ibc.transfer.has_shielded_data){
             v->ibc.transfer.shielded_hash.len = HASH_LEN;
+            v->ibc.transfer.fmd_section_hash.len = HASH_LEN;
             CHECK_ERROR(readBytes(&ctx,  &v->ibc.transfer.shielded_hash.ptr, v->ibc.transfer.shielded_hash.len))
+            CHECK_ERROR(readBytes(&ctx,  &v->ibc.transfer.fmd_section_hash.ptr, v->ibc.transfer.fmd_section_hash.len))
         }
     }
 
