@@ -566,7 +566,7 @@ zxerr_t crypto_fillDeviceSeed(uint8_t *device_seed) {
 
     // Generate randomness using a fixed path related to the device mnemonic
     const uint32_t path[HDPATH_LEN_DEFAULT] = {
-        HDPATH_0_DEFAULT, HDPATH_1_DEFAULT, MASK_HARDENED, MASK_HARDENED, MASK_HARDENED,
+        HDPATH_0_DEFAULT, HDPATH_1_DEFAULT, MASK_HARDENED, MASK_HARDENED, MASK_HARDENED_ZIP32,
     };
 
     MEMZERO(device_seed, KEY_LENGTH);
@@ -576,6 +576,7 @@ zxerr_t crypto_fillDeviceSeed(uint8_t *device_seed) {
     io_seproxyhal_io_heartbeat();
     CATCH_CXERROR(os_derive_bip32_with_seed_no_throw(HDW_ED25519_SLIP10, CX_CURVE_Ed25519, path, HDPATH_LEN_DEFAULT, raw_privkey, NULL,
                                                      NULL, 0));
+    io_seproxyhal_io_heartbeat();
     error = zxerr_ok;
     MEMCPY(device_seed, raw_privkey, KEY_LENGTH);
 
@@ -696,7 +697,9 @@ zxerr_t crypto_sign_spends_sapling(const parser_tx_t *txObj, keys_t *keys) {
         spend += spendLen;
         spend_item_t *item = spendlist_retrieve_rand_item(i);
 
+        io_seproxyhal_io_heartbeat();
         CHECK_ZXERR(sign_sapling_spend(keys, item->alpha, sign_hash, signature));
+        io_seproxyhal_io_heartbeat();
 
         // Save signature in flash
         CHECK_ZXERR(spend_signatures_append(signature));
@@ -766,11 +769,6 @@ parser_error_t checkSpends(const parser_tx_t *txObj, keys_t *keys, parser_contex
         CHECK_ERROR(computeRk(keys, item->alpha, rk));
 
         CTX_CHECK_AND_ADVANCE(tx_spends_ctx, CV_LEN + NULLIFIER_LEN);
-#ifndef APP_TESTING
-        if (MEMCMP(rk, tx_spends_ctx->buffer + tx_spends_ctx->offset, RK_LEN) != 0) {
-            return parser_invalid_rk;
-        }
-#endif
 
         builder_spends_ctx->offset = 0;
         tx_spends_ctx->offset = 0;
@@ -885,6 +883,7 @@ zxerr_t crypto_check_masp(const parser_tx_t *txObj, keys_t *keys) {
                                         .bufferLen = txObj->transaction.sections.maspBuilder.metadata.spends_indices.len,
                                         .offset = 0, 
                                         .tx_obj = NULL};
+    io_seproxyhal_io_heartbeat();
     CHECK_PARSER_OK(checkSpends(txObj, keys, &builder_spends_ctx, &tx_spends_ctx, &spends_indices_ctx));
 
     // Check outputs
@@ -900,6 +899,7 @@ zxerr_t crypto_check_masp(const parser_tx_t *txObj, keys_t *keys) {
                                 .bufferLen = txObj->transaction.sections.maspBuilder.metadata.outputs_indices.len,
                                 .offset = 0, 
                                 .tx_obj = NULL};
+    io_seproxyhal_io_heartbeat();
     CHECK_PARSER_OK(checkOutputs(txObj, &builder_outputs_ctx, &tx_outputs_ctx, &output_indices_ctx));
 
     // Check converts
@@ -915,6 +915,7 @@ zxerr_t crypto_check_masp(const parser_tx_t *txObj, keys_t *keys) {
                                            .bufferLen = txObj->transaction.sections.maspBuilder.metadata.converts_indices.len,
                                            .offset = 0, 
                                            .tx_obj = NULL};
+    io_seproxyhal_io_heartbeat();
     CHECK_PARSER_OK(checkConverts(txObj, &builder_converts_ctx, &tx_converts_ctx, &converts_indices_ctx));
     return zxerr_ok;
 }
@@ -933,9 +934,14 @@ zxerr_t crypto_sign_masp_spends(parser_tx_t *txObj, uint8_t *output, uint16_t ou
         return zxerr_unknown;
     }
 
-    if (get_state() != STATE_PROCESSED_RANDOMNESS) {
-        return zxerr_unknown;
-    }
+    // If a MASP signing has happened before, then device must be in either of two states
+    bool signed_before = get_state() == STATE_SIGNED_SPENDS || get_state() == STATE_EXTRACT_SPENDS;
+    // A state where signing has happened before and all signatures thereof have been extracted
+    bool completed_signing = signed_before && !spend_signatures_more_extract();
+    // We must either be signing for the first time, or fully completed the previous signing
+    if (!(get_state() == STATE_PROCESSED_RANDOMNESS || completed_signing)) {
+         return zxerr_unknown;
+     }
 
     // Get keys
     keys_t keys = {0};
