@@ -18,6 +18,7 @@
 
 #include <common/parser.h>
 #include <sstream>
+#include <memory>
 #include <string>
 #include <fmt/core.h>
 #include "common.h"
@@ -131,13 +132,17 @@ void check_testcase(const testcase_t &tc, bool expert_mode) {
     parser_context_t ctx = {0};
     parser_error_t err = parser_unexpected_error;
 
-    uint8_t buffer[10000] = {0};
-    const uint16_t bufferLen = parseHexString(buffer, sizeof(buffer), tc.blob.c_str());
+    uint16_t bufferCap = 0xffff;
+    std::unique_ptr<uint8_t> buffer{new uint8_t[bufferCap]};
+    ASSERT_NE(buffer, nullptr) << "Failed to allocate tx buffer";
+
+    const uint16_t bufferLen = parseHexString(buffer.get(), bufferCap, tc.blob.c_str());
+    ASSERT_NE(bufferLen, 0) << "Failed to parse tx from provided blob: " << tc.blob;
 
     parser_tx_t tx_obj;
     memset(&tx_obj, 0, sizeof(tx_obj));
 
-    err = parser_parse(&ctx, buffer, bufferLen, &tx_obj);
+    err = parser_parse(&ctx, buffer.get(), bufferLen, &tx_obj);
     ASSERT_EQ(err, parser_ok) << parser_getErrorDescription(err);
 
     err = parser_validate(&ctx);
