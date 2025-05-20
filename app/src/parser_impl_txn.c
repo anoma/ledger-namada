@@ -1252,7 +1252,7 @@ parser_error_t readSections(parser_context_t *ctx, parser_tx_t *v) {
     }
     CHECK_ERROR(readUint32(ctx, &v->transaction.sections.sectionLen))
 
-    if (v->transaction.sections.sectionLen > 7) {
+    if (v->transaction.sections.sectionLen > 8) {
         return parser_invalid_output_buffer;
     }
     v->transaction.isMasp = false;
