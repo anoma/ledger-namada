@@ -29,14 +29,13 @@ const TEST_SIGN_DATA = {
   name: 'transfer',
   blob: Buffer.from(MASP_TRANSFER_SIGNING_TX, 'hex'),
   sectionHashes: {
-    0: Buffer.from('af859437564c2c660a42903d9dca0686f1229cf4039894cf2b4cc4529decde6f', 'hex'),
+    0: Buffer.from('0474ae7280f687ac6d95367da481479c7145e60fa94cbb94b67d4130f5e636bd', 'hex'),
     1: Buffer.from('1f07d555db2430f5dbf51e1f70ce0852affeb8d5791a6957a9895b40ce79e726', 'hex'),
-    2: Buffer.from('20b9054f4e22fdaeda9d89999fee8c91493873ccaa268df016e0fe86e55de363', 'hex'),
-    3: Buffer.from('a4fa85bd4b2205d4fd51e438bf65c95edf3503236ec0ffbe3a471524af2efa24', 'hex'),
-    4: Buffer.from('0cadb91730d8d5904469534807019c50300e492afd8aa118d91482c5c8f7d657', 'hex'),
-    5: Buffer.from('229f900de2dd6d43affc2822cceac915bdfba7e9b001f435f42a677c69708aaa', 'hex'),
-    6: Buffer.from('21085924ad08eb3b0934a9f558c9a34d89180defbb4bb583747e519073f2399e', 'hex'),
-    0xff: Buffer.from('95d70ed16980f4cab39179b420fe39b5d0209eae016778307bf3bc43d4b9999a', 'hex'),
+    2: Buffer.from('a4fa85bd4b2205d4fd51e438bf65c95edf3503236ec0ffbe3a471524af2efa24', 'hex'),
+    3: Buffer.from('0cadb91730d8d5904469534807019c50300e492afd8aa118d91482c5c8f7d657', 'hex'),
+    4: Buffer.from('e860b624d11094f3a1782ed504e391d608db583423c940bd040e012a14efd917', 'hex'),
+    5: Buffer.from('93d490522af5054c06cf65eb493de80159d1cd55fe40a5971fdb4766910a57d7', 'hex'),
+    0xff: Buffer.from('f2cb1effd9d5bb3091d9772d2a6d341f1620c59f8043e2acf8323b2dc4c924e3', 'hex'),
   } as { [index: number]: Buffer },
 }
 
